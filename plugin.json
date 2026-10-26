@@ -1,0 +1,20 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "codex-rail",
+  "version": "0.2.0",
+  "description": "A compact animated train below Codex CLI. Setup keeps the normal codex command.",
+  "extensions": {
+    "com.openai": {
+      "onboardingSkill": "./skills/setup/SKILL.md",
+      "interface": {
+        "displayName": "Codex Rail",
+        "shortDescription": "컨텍스트 승객과 주간 사용량 열차",
+        "longDescription": "기존 codex 명령을 유지하면서 터미널 아래에 모델 명판, 컨텍스트 승객, 주간 사용량, Fast 증기와 작업 상태를 표시합니다. 최초 설정 시 zsh 실행 연동을 설치합니다.",
+        "developerName": "Blossom",
+        "category": "Productivity",
+        "brandColor": "#C4A6F7",
+        "defaultPrompt": ["Codex Rail을 설정해서 codex 명령으로 열차를 표시해줘."]
+      }
+    }
+  }
+}
