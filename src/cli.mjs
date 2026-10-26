@@ -82,7 +82,8 @@ async function launch(){
       '-x',String(process.stdout.columns||100),'-y',String(process.stdout.rows||30),'-c',process.cwd(),
       `${quote(process.execPath)} ${quote(join(here,'session.mjs'))} ${quote(configPath)}`);
     tm('set-option','-t',session,'status','off');
-    tm('set-option','-t',session,'mouse','off');
+    // Let tmux scroll the transcript instead of the terminal turning wheel input into arrow keys.
+    tm('set-option','-t',session,'mouse','on');
     tm('set-option','-t',session,'destroy-unattached','off');
     tm('set-option','-t',session,'pane-border-style','fg=colour238');
     tm('set-option','-t',session,'pane-active-border-style','fg=colour238');

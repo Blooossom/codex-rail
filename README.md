@@ -31,7 +31,7 @@ codex plugin add codex-rail@blossom-local
 
 설치 후 새 Codex 세션에서 **“Codex Rail 설정해줘”**라고 요청해 설치된 플러그인의 setup 스킬을 실행하세요. 이 최초 설정이 zsh 연동을 설치합니다. 그 다음 **새 터미널 탭**에서 평소처럼 `codex`를 실행하면 열차가 표시됩니다. 이미 열린 셸에서는 `source ~/.config/codex-rail/integration.zsh`를 한 번 실행하세요. `/plugins`에서 활성화하는 것만으로 이미 실행 중인 셸의 명령 해석이 바뀌지는 않습니다.
 
-수동으로 설정하려면 `codex plugin list --json`에서 `codex-rail@blossom-local`의 `installedPath`를 확인한 뒤 해당 폴더에서 `python3 scripts/setup.py --install`과 `python3 scripts/setup.py --status`를 실행합니다. GitHub 저장소를 직접 복제할 필요는 없습니다. `blossom-local`은 이 저장소의 마켓플레이스 식별자입니다.
+수동으로 설정하려면 `codex plugin add codex-rail@blossom-local --json`의 출력에서 `installedPath`를 확인한 뒤 해당 폴더에서 `python3 scripts/setup.py --install`과 `python3 scripts/setup.py --status`를 실행합니다. GitHub 저장소를 직접 복제할 필요는 없습니다. `blossom-local`은 이 저장소의 마켓플레이스 식별자입니다.
 
 ### 업데이트
 
@@ -59,19 +59,21 @@ python3 scripts/setup.py --status
 
 최소 높이는 20줄, 권장 너비는 80칸이고 열차는 6줄을 사용합니다. 작은 창에서는 간단한 열차로 전환합니다. 일반 Codex처럼 종료하면 열차도 종료됩니다. 래퍼 내부의 tmux에서 `Ctrl+B`, `D`를 누르면 이 래퍼 세션도 닫힙니다. 기존 사용자의 tmux 설정과 세션은 건드리지 않습니다.
 
+대화 영역에서 마우스 휠이나 트랙패드로 위아래로 스크롤하면 이전 대화 출력을 볼 수 있습니다. 맨 아래까지 내리거나 스크롤 모드에서 `q`를 누르면 입력 화면으로 돌아옵니다. 키보드로는 `Ctrl+B`를 누른 다음 `[`를 눌러 스크롤 모드에 들어갈 수 있습니다. 방향키 위·아래는 기존처럼 입력 기록을 탐색합니다. 0.2.0의 휠이 입력 기록을 넘기던 문제는 0.2.1에서 수정했습니다.
+
 `codex exec`, 로그인, 업데이트, 플러그인 관리, 도움말, 버전 조회, 명시적인 원격 연결, 파이프 실행은 원래 Codex로 전달됩니다. `CODEX_RAIL_DISABLE=1 codex` 또는 `command codex`로 일시적으로 우회할 수 있습니다. `/plugins`에서 비활성화하면 다음 실행부터 원래 Codex를 사용합니다. 셸 연동을 완전히 지우려면 `python3 <설치된 플러그인>/scripts/setup.py --remove`를 실행합니다.
 
 `CODEX_RAIL_REDUCED_MOTION=1 codex`로 동작을 줄이고, `NO_COLOR=1 codex`로 색을 끌 수 있습니다. 플러그인 설정은 `codex-rail`이라는 별도 명령을 PATH에 추가하지 않습니다.
 
 데모 키: `1` 작업, `2` 승인 대기, `3` 완료, `4` 오류, `5` 압축, `m` 모델 변경, `f` Fast 전환, `q` 종료. 데모는 가상 데이터이며 모델을 호출하지 않습니다.
 
-## 소규모 테스트 배포 (0.2.0)
+## 소규모 테스트 배포 (0.2.1)
 
 이번 테스트의 우선 대상은 macOS + zsh입니다. Linux와 Windows는 아직 검증하지 않았습니다. 개발 환경의 Codex CLI는 0.164.0이며 다른 버전의 호환성은 별도 확인이 필요합니다. Node 22 이상, Python 3.11 이상, tmux와 로그인된 Codex CLI를 준비하세요. WebSocket 라이브러리가 포함돼 있어 `npm install`은 필요하지 않습니다.
 
 ### 받는 사람: 설치
 
-전달받은 `codex-rail-0.2.0-test.zip`을 압축 해제한 뒤 `codex-rail-0.2.0` 폴더를 계속 보관할 위치로 옮기세요. 아래 명령은 그 폴더에서 실행합니다. 경로에 공백이 있어도 됩니다. 설치 후 폴더를 옮기거나 삭제하면 셸 연동을 다시 설정해야 합니다.
+전달받은 `codex-rail-0.2.1-test.zip`을 압축 해제한 뒤 `codex-rail-0.2.1` 폴더를 계속 보관할 위치로 옮기세요. 아래 명령은 그 폴더에서 실행합니다. 경로에 공백이 있어도 됩니다. 설치 후 폴더를 옮기거나 삭제하면 셸 연동을 다시 설정해야 합니다.
 
 ```sh
 node --version
@@ -125,7 +127,7 @@ python3 -m unittest discover -s test -p 'test_*.py'
 python3 scripts/package.py
 ```
 
-`dist/codex-rail-0.2.0-test.zip`과 같은 이름의 `.zip.sha256` 파일을 테스트 참여자에게 함께 전달합니다. ZIP에는 실행 코드, 설치 스킬, 마켓플레이스 정보, 안내, 기존 테스트와 `ws` 라이선스가 들어갑니다. `node_modules`, Python 캐시, 로그, 개인 설정은 포함하지 않습니다. 체크섬은 두 파일이 있는 폴더에서 `shasum -a 256 -c codex-rail-0.2.0-test.zip.sha256`으로 확인할 수 있습니다.
+`dist/codex-rail-0.2.1-test.zip`과 같은 이름의 `.zip.sha256` 파일을 테스트 참여자에게 함께 전달합니다. ZIP에는 실행 코드, 설치 스킬, 마켓플레이스 정보, 안내, 기존 테스트와 `ws` 라이선스가 들어갑니다. `node_modules`, Python 캐시, 로그, 개인 설정은 포함하지 않습니다. 체크섬은 두 파일이 있는 폴더에서 `shasum -a 256 -c codex-rail-0.2.1-test.zip.sha256`으로 확인할 수 있습니다.
 
 다음 배포에서는 `plugin.json`, `package.json`, `package-lock.json`의 버전을 함께 올리고 위 안내의 버전과 파일 이름도 갱신하세요. 참여자는 이전 연동과 플러그인을 제거한 뒤 새 폴더에서 다시 설치합니다.
 
