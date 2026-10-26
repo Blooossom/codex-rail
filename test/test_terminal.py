@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import termios
+import threading
 import time
 import unittest
 
@@ -51,23 +52,34 @@ with open({str(received)!r}, 'ab', buffering=0) as output:
                                         stdin=slave, stdout=slave, stderr=slave, env=env)
             os.close(slave)
             server = f'codex-rail-{launcher.pid}'
+            stopped = threading.Event()
+
+            def drain():
+                # Keep consuming terminal redraws during shutdown as well as assertions.
+                while not stopped.is_set():
+                    if select.select([master], [], [], 0.05)[0]:
+                        try:
+                            if not os.read(master, 65536):
+                                return
+                        except OSError:
+                            return
+
+            reader = threading.Thread(target=drain, daemon=True)
+            reader.start()
             try:
                 def tm(*args):
                     return subprocess.check_output(['tmux', '-L', server, *args],
-                                                   env=env, text=True, stderr=subprocess.DEVNULL).strip()
+                                                   env=env, text=True, stderr=subprocess.DEVNULL,
+                                                   timeout=5).strip()
 
                 def wait_for(condition):
                     deadline = time.monotonic() + 10
                     while time.monotonic() < deadline:
-                        if select.select([master], [], [], 0.02)[0]:
-                            try:
-                                os.read(master, 65536)
-                            except OSError:
-                                self.fail('Launcher exited before the terminal was ready')
                         if launcher.poll() is not None:
                             self.fail(f'Launcher exited with {launcher.returncode}')
                         if condition():
                             return
+                        time.sleep(0.02)
                     self.fail('Timed out waiting for terminal state')
 
                 wait_for(lambda: ready.exists())
@@ -92,7 +104,11 @@ with open({str(received)!r}, 'ab', buffering=0) as output:
                     except subprocess.TimeoutExpired:
                         launcher.kill()
                         launcher.wait()
-                subprocess.run(['tmux', '-L', server, 'kill-server'], capture_output=True)
+                try:
+                    subprocess.run(['tmux', '-L', server, 'kill-server'], capture_output=True, timeout=5)
+                finally:
+                    stopped.set()
+                    reader.join(timeout=1)
                 os.close(master)
 
 
