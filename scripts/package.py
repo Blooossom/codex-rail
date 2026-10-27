@@ -23,7 +23,7 @@ def main():
         'scripts/setup.py', 'scripts/dispatch.py', 'scripts/package.py',
         'vendor/ws/package.json', 'vendor/ws/README.md', 'vendor/ws/LICENSE',
     )}
-    for pattern in ('src/*.mjs', 'scripts/*.py', 'scripts/*.ps1', 'test/*.mjs', 'test/*.ps1', 'test/test_*.py', 'vendor/ws/*.js',
+    for pattern in ('src/*.mjs', 'scripts/*.mjs', 'scripts/*.py', 'scripts/*.ps1', 'hooks/*.json', 'test/*.mjs', 'test/*.ps1', 'test/test_*.py', 'vendor/ws/*.js',
                     'vendor/ws/*.mjs', 'vendor/ws/lib/*.js'):
         files.update(p.relative_to(root) for p in root.glob(pattern))
     for relative in files:

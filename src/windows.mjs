@@ -32,10 +32,11 @@ export function terminalArguments({ windowName, powershell, node, configPath, st
 }
 
 export function restrictDirectory(directory) {
-  const identity = spawnSync('whoami.exe', ['/user', '/fo', 'csv', '/nh'], { encoding: 'utf8', windowsHide: true });
+  const system32 = join(process.env.SystemRoot || 'C:\\Windows', 'System32');
+  const identity = spawnSync(join(system32, 'whoami.exe'), ['/user', '/fo', 'csv', '/nh'], { encoding: 'utf8', windowsHide: true });
   const sid = identity.stdout?.match(/S-1-(?:\d+-)*\d+/)?.[0];
   if (identity.status !== 0 || !sid) throw new Error('Could not identify the current Windows account.');
-  const acl = spawnSync('icacls.exe', [directory, '/inheritance:r', '/grant:r', `*${sid}:(OI)(CI)F`],
+  const acl = spawnSync(join(system32, 'icacls.exe'), [directory, '/inheritance:r', '/grant:r', `*${sid}:(OI)(CI)F`],
     { encoding: 'utf8', windowsHide: true });
   if (acl.status !== 0) throw new Error('Could not protect the temporary session directory.');
 }

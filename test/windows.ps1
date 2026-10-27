@@ -29,7 +29,7 @@ try {
     if (-not (Get-ChildItem $temporary -Filter '*.codex-rail-backup-*')) { throw 'Profile backup missing' }
     . $profilePath
     if ((Get-Command codex).CommandType -ne 'Function') { throw 'PowerShell function did not load' }
-    $version = codex --version | ConvertFrom-Json
+    $version = @(codex --version | ConvertFrom-Json)
     if ($version[0] -ne '--version') { throw 'Version did not reach native Codex' }
     $unicode = ([string][char]0xD55C) + ([string][char]0xAE00)
     $expected = @('exec', '', 'space value', 'a"b', "it's", '`literal', 'x; y & z', '$(Get-Process)', $unicode)
@@ -48,6 +48,13 @@ try {
     }
     $status = & (Join-Path $root 'scripts\setup.ps1') -Status -ProfilePath $profilePath | ConvertFrom-Json
     if ($status.configured) { throw 'Removal left integration configured' }
+    $env:PLUGIN_ROOT = $root
+    $env:CODEX_RAIL_AUTO_SETUP_DISABLE = '1'
+    $hook = (Get-Content -LiteralPath (Join-Path $root 'hooks\hooks.json') -Raw | ConvertFrom-Json).hooks.SessionStart[0].hooks[0].command
+    & $env:ComSpec /d /s /c $hook
+    if ($LASTEXITCODE -ne 0) { throw 'Cross-platform hook command failed under cmd.exe' }
+    Remove-Item Env:\CODEX_RAIL_AUTO_SETUP_DISABLE
+    Remove-Item Env:\PLUGIN_ROOT
     Write-Output "PowerShell $($PSVersionTable.PSVersion): setup, profile backup, exact argv, native commands, pipeline and removal OK"
 } finally {
     Remove-Item Function:\codex -ErrorAction SilentlyContinue

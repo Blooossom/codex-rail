@@ -35,7 +35,11 @@ codex plugin marketplace add Blooossom/codex-rail
 codex plugin add codex-rail@blossom-local
 ```
 
-**`plugin add`만으로 열차가 표시되지는 않습니다.** 설치 후 새 Codex 세션에서 **“Codex Rail setup 스킬로 터미널 연동을 설치하고 상태까지 확인해줘”**라고 요청하세요. 최초 설정이 현재 셸에 맞는 실행 연동을 설치합니다. 그 다음 **새 터미널 탭**에서 `codex`를 실행합니다. `/plugins`에서 활성화하는 것만으로 이미 실행 중인 셸의 명령 해석이 바뀌지는 않습니다.
+설치 후 새 Codex 세션에서 **`/hooks`를 열어 Codex Rail의 자동 설정 훅을 한 번 검토하고 신뢰**하세요. 그 다음 새 Codex 세션을 시작하면 필요한 셸 연동을 자동으로 설치하고, 완료 안내가 나옵니다. **새 터미널 탭**에서 `codex`를 실행하면 열차가 표시됩니다. 이후에는 기존 연동을 확인하고 버전 업데이트 시 실행 경로를 갱신합니다.
+
+Codex는 사용자가 신뢰하지 않은 훅을 실행하지 않습니다. **`plugin add`만 실행하거나 훅을 신뢰하지 않은 상태에서는 셸 연동이 자동 설치되지 않습니다.** 훅을 사용하지 않으려면 새 Codex 세션에서 **“Codex Rail setup 스킬로 터미널 연동을 설치하고 상태까지 확인해줘”**라고 요청하거나 아래 수동 명령을 사용하세요. `/plugins` 활성화나 자동 설정으로 이미 실행 중인 부모 셸의 명령 해석이 바뀌지는 않습니다. [공식 훅 신뢰 안내](https://learn.chatgpt.com/docs/hooks)
+
+자동 설정은 시스템 패키지를 설치하지 않습니다. tmux·Node·Python 등이 없으면 필요한 조치를 안내합니다. Windows에서는 설치된 PowerShell 5.1과 7의 ConsoleHost 프로필을 설정하며, 다른 호스트용 프로필은 아래 수동 설정을 사용합니다. 자동 설정만 끄려면 `CODEX_RAIL_AUTO_SETUP_DISABLE=1`을 환경 변수로 지정하세요.
 
 수동으로 설정하려면 `codex plugin add codex-rail@blossom-local --json`의 출력에서 `installedPath`를 확인한 뒤 해당 폴더에서 `python3 scripts/setup.py --install`과 `python3 scripts/setup.py --status`를 실행합니다. GitHub 저장소를 직접 복제할 필요는 없습니다. `blossom-local`은 이 저장소의 마켓플레이스 식별자입니다.
 
