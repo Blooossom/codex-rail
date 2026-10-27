@@ -1,6 +1,6 @@
 {
   "name": "codex-rail",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "description": "A small train beneath the Codex CLI, driven by app-server events.",

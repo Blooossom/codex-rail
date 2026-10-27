@@ -25,7 +25,7 @@ node src/cli.mjs --demo  # 이 폴더에서 실행하는 데모
 | 환경 | 추가 요구사항 | 지원 범위 |
 | --- | --- | --- |
 | macOS + zsh | tmux, 로컬 app-server daemon | 실제 터미널 검증 완료 |
-| Windows PowerShell 5.1 / PowerShell 7 | Windows Terminal (`wt.exe`), native Codex CLI | 0.3.0 실험 지원. 자동 테스트 대상이며 실제 Windows Terminal 화면은 미검증 |
+| Windows PowerShell 5.1 / PowerShell 7 | Windows Terminal (`wt.exe`), native Codex CLI | 0.3.1 실험 지원. 자동 테스트 대상이며 실제 Windows Terminal 화면은 미검증 |
 | Linux + zsh | tmux, 로컬 app-server daemon | 자동 테스트 대상. 실제 사용은 미검증 |
 
 Windows에서 WSL이나 tmux는 필요하지 않습니다. ZIP 다운로드나 `npm install` 없이 아래 명령으로 설치할 수 있습니다.
@@ -35,7 +35,9 @@ codex plugin marketplace add Blooossom/codex-rail
 codex plugin add codex-rail@blossom-local
 ```
 
-설치 후 새 Codex 세션에서 **`/hooks`를 열어 Codex Rail의 자동 설정 훅을 한 번 검토하고 신뢰**하세요. 그 다음 새 Codex 세션을 시작하면 필요한 셸 연동을 자동으로 설치하고, 완료 안내가 나옵니다. **새 터미널 탭**에서 `codex`를 실행하면 열차가 표시됩니다. 이후에는 기존 연동을 확인하고 버전 업데이트 시 실행 경로를 갱신합니다.
+설치 후 새 Codex 세션에서 **`/hooks` → `SessionStart` → `Codex Rail: automatic shell setup`**을 선택하세요. 출처가 `Plugin - codex-rail@blossom-local`이고 명령에 `auto-setup.mjs`가 있는지 검토한 뒤 훅을 신뢰합니다. 그 다음 새 Codex 세션을 시작하면 필요한 셸 연동을 자동으로 설치하고, 완료 안내가 나옵니다. **새 터미널 탭**에서 `codex`를 실행하면 열차가 표시됩니다. 이후에는 기존 연동을 확인하고 버전 업데이트 시 실행 경로를 갱신합니다.
+
+0.3.0은 Codex 0.164.0에서 플러그인 훅이 목록에 나타나지 않는 문제가 있었습니다. 0.3.1은 `.codex-plugin/plugin.json` 호환 형식을 사용해 이를 수정합니다. `Unnamed hook`이 보인다는 이유만으로 신뢰를 바꾸지 말고 출처와 명령을 확인하세요. `PermissionRequest`에는 이 자동 설정 훅이 없습니다.
 
 Codex는 사용자가 신뢰하지 않은 훅을 실행하지 않습니다. **`plugin add`만 실행하거나 훅을 신뢰하지 않은 상태에서는 셸 연동이 자동 설치되지 않습니다.** 훅을 사용하지 않으려면 새 Codex 세션에서 **“Codex Rail setup 스킬로 터미널 연동을 설치하고 상태까지 확인해줘”**라고 요청하거나 아래 수동 명령을 사용하세요. `/plugins` 활성화나 자동 설정으로 이미 실행 중인 부모 셸의 명령 해석이 바뀌지는 않습니다. [공식 훅 신뢰 안내](https://learn.chatgpt.com/docs/hooks)
 
@@ -109,13 +111,13 @@ tmux의 대화 영역에서 마우스 휠이나 트랙패드로 위아래로 스
 
 데모 키: `1` 작업, `2` 승인 대기, `3` 완료, `4` 오류, `5` 압축, `m` 모델 변경, `f` Fast 전환, `q` 종료. 데모는 가상 데이터이며 모델을 호출하지 않습니다.
 
-## 소규모 테스트 배포 (0.3.0)
+## 소규모 테스트 배포 (0.3.1)
 
 아래 ZIP 설치 안내는 macOS + zsh용입니다. Windows는 위 PowerShell 설치 안내를 따르세요. 개발 환경의 Codex CLI는 0.164.0이며 다른 버전의 호환성은 별도 확인이 필요합니다. Node 22 이상, Python 3.11 이상, tmux와 로그인된 Codex CLI를 준비하세요. WebSocket 라이브러리가 포함돼 있어 `npm install`은 필요하지 않습니다.
 
 ### 받는 사람: 설치
 
-전달받은 `codex-rail-0.3.0-test.zip`을 압축 해제한 뒤 `codex-rail-0.3.0` 폴더를 계속 보관할 위치로 옮기세요. 아래 명령은 그 폴더에서 실행합니다. 경로에 공백이 있어도 됩니다. 설치 후 폴더를 옮기거나 삭제하면 셸 연동을 다시 설정해야 합니다.
+전달받은 `codex-rail-0.3.1-test.zip`을 압축 해제한 뒤 `codex-rail-0.3.1` 폴더를 계속 보관할 위치로 옮기세요. 아래 명령은 그 폴더에서 실행합니다. 경로에 공백이 있어도 됩니다. 설치 후 폴더를 옮기거나 삭제하면 셸 연동을 다시 설정해야 합니다.
 
 ```sh
 node --version
@@ -169,9 +171,9 @@ python3 -m unittest discover -s test -p 'test_*.py'
 python3 scripts/package.py
 ```
 
-`dist/codex-rail-0.3.0-test.zip`과 같은 이름의 `.zip.sha256` 파일을 테스트 참여자에게 함께 전달합니다. ZIP에는 실행 코드, 설치 스킬, 마켓플레이스 정보, 안내, 기존 테스트와 `ws` 라이선스가 들어갑니다. `node_modules`, Python 캐시, 로그, 개인 설정은 포함하지 않습니다. 체크섬은 두 파일이 있는 폴더에서 `shasum -a 256 -c codex-rail-0.3.0-test.zip.sha256`으로 확인할 수 있습니다.
+`dist/codex-rail-0.3.1-test.zip`과 같은 이름의 `.zip.sha256` 파일을 테스트 참여자에게 함께 전달합니다. ZIP에는 실행 코드, 설치 스킬, 마켓플레이스 정보, 안내, 기존 테스트와 `ws` 라이선스가 들어갑니다. `node_modules`, Python 캐시, 로그, 개인 설정은 포함하지 않습니다. 체크섬은 두 파일이 있는 폴더에서 `shasum -a 256 -c codex-rail-0.3.1-test.zip.sha256`으로 확인할 수 있습니다.
 
-다음 배포에서는 `plugin.json`, `package.json`, `package-lock.json`의 버전을 함께 올리고 위 안내의 버전과 파일 이름도 갱신하세요. 참여자는 이전 연동과 플러그인을 제거한 뒤 새 폴더에서 다시 설치합니다.
+다음 배포에서는 `.codex-plugin/plugin.json`, `package.json`, `package-lock.json`의 버전을 함께 올리고 위 안내의 버전과 파일 이름도 갱신하세요. 참여자는 이전 연동과 플러그인을 제거한 뒤 새 폴더에서 다시 설치합니다.
 
 이 ZIP은 소규모 수동 설치 테스트용입니다. 마켓플레이스 구조는 [공식 플러그인 패키징 문서](https://developers.openai.com/plugins/build/plugins)를 참고합니다.
 

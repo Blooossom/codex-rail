@@ -8,7 +8,7 @@
             "type": "command",
             "command": "node --input-type=commonjs -e \"import(require('node:url').pathToFileURL(require('node:path').join(process.env.PLUGIN_ROOT,'scripts','auto-setup.mjs')).href).then(m=>m.main())\"",
             "timeout": 30,
-            "statusMessage": "Checking Codex Rail shell integration"
+            "statusMessage": "Codex Rail: automatic shell setup"
           }
         ]
       }

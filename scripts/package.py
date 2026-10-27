@@ -9,7 +9,7 @@ import zipfile
 
 def main():
     root = Path(__file__).resolve().parent.parent
-    plugin = json.loads((root / 'plugin.json').read_text(encoding='utf-8'))
+    plugin = json.loads((root / '.codex-plugin/plugin.json').read_text(encoding='utf-8'))
     package = json.loads((root / 'package.json').read_text(encoding='utf-8'))
     lock = json.loads((root / 'package-lock.json').read_text(encoding='utf-8'))
     version = plugin['version']
@@ -18,7 +18,7 @@ def main():
     if any(v != version for v in (package['version'], lock['version'], lock['packages']['']['version'])):
         raise SystemExit('Plugin, package and lockfile versions must match.')
     files = {Path(p) for p in (
-        'plugin.json', 'package.json', 'package-lock.json', 'README.md',
+        '.codex-plugin/plugin.json', 'package.json', 'package-lock.json', 'README.md',
         '.agents/plugins/marketplace.json', 'skills/setup/SKILL.md',
         'scripts/setup.py', 'scripts/dispatch.py', 'scripts/package.py',
         'vendor/ws/package.json', 'vendor/ws/README.md', 'vendor/ws/LICENSE',

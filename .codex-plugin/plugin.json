@@ -1,0 +1,23 @@
+{
+  "name": "codex-rail",
+  "version": "0.3.1",
+  "description": "A compact animated train below Codex CLI. Setup keeps the normal codex command.",
+  "skills": "./skills",
+  "hooks": "./hooks/hooks.json",
+  "extensions": {
+    "com.openai": {
+      "onboardingSkill": "./skills/setup/SKILL.md"
+    }
+  },
+  "interface": {
+    "displayName": "Codex Rail",
+    "shortDescription": "컨텍스트 승객과 주간 사용량 열차",
+    "longDescription": "기존 codex 명령으로 모델 명판, 컨텍스트 승객, 주간 사용량, Fast 증기와 작업 상태를 표시합니다. macOS zsh와 Windows PowerShell을 지원하며 Windows Terminal 화면은 실험 지원입니다. /hooks에서 자동 설정 훅을 신뢰하면 셸 연동을 설치합니다. 설정 후 새 터미널 탭을 열어 주세요.",
+    "developerName": "Blossom",
+    "category": "Productivity",
+    "brandColor": "#C4A6F7",
+    "defaultPrompt": [
+      "Codex Rail을 설정해서 codex 명령으로 열차를 표시해줘."
+    ]
+  }
+}

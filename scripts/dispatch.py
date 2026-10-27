@@ -79,7 +79,8 @@ def main():
         raise SystemExit('Native codex executable was not found.')
     root = Path(settings.get('plugin_root', '/nonexistent'))
     node = settings.get('node', '')
-    enabled = (settings and (root/'plugin.json').is_file() and (root/'src/cli.mjs').is_file()
+    manifest = (root/'plugin.json').is_file() or (root/'.codex-plugin/plugin.json').is_file()
+    enabled = (settings and manifest and (root/'src/cli.mjs').is_file()
                and Path(node).is_file() and os.isatty(0) and os.isatty(1)
                and os.environ.get('CODEX_RAIL_DISABLE') != '1'
                and os.environ.get('CODEX_RAIL_ACTIVE') != '1'
