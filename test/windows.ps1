@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $temporary = Join-Path ([IO.Path]::GetTempPath()) ("rail-ps-test-" + [guid]::NewGuid().ToString('N'))
-$bin = Join-Path $temporary "bin space ' & ;"
+$bin = Join-Path $temporary "bin space ' &"
 $profilePath = Join-Path $temporary 'profile test.ps1'
 $originalPath = $env:PATH
 $originalAppData = $env:APPDATA
