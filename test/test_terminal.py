@@ -30,6 +30,8 @@ class TerminalTests(unittest.TestCase):
             base = Path(temporary).resolve()
             (base/'shell').mkdir()
             (base/'codex').mkdir()
+            # Exercise our isolated profile, not the runner's global completions.
+            (base/'shell/.zshenv').write_text('unsetopt GLOBAL_RCS\n')
             (base/'shell/.zshrc').write_text('codex() { command codex --no-alt-screen "$@"; }\n')
             env = dict(os.environ, CODEX_HOME=str(base/'codex'), XDG_CONFIG_HOME=str(base/'config'),
                        ZDOTDIR=str(base/'shell'), SHELL=shutil.which('zsh'), TERM='xterm-256color', TMUX='')
@@ -88,7 +90,11 @@ class TerminalTests(unittest.TestCase):
                     child.wait(timeout=5)
                 except subprocess.TimeoutExpired:
                     os.killpg(child.pid, signal.SIGTERM)
-                    child.wait(timeout=5)
+                    try:
+                        child.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        os.killpg(child.pid, signal.SIGKILL)
+                        child.wait(timeout=5)
                 stopped.set()
                 reader.join(timeout=1)
                 os.close(master)

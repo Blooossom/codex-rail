@@ -37,6 +37,8 @@ class ZshSetupTests(unittest.TestCase):
             bin_path.mkdir()
             shell = base/'shell'
             shell.mkdir()
+            # Global /etc/zshrc may prompt before our profile is loaded in CI.
+            (shell/'.zshenv').write_text('unsetopt GLOBAL_RCS\n')
             (base/'project').mkdir()
             native = bin_path/'codex'
             native.write_text(f'''#!{sys.executable}
