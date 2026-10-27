@@ -12,7 +12,7 @@ if (([int]$Install.IsPresent + [int]$Status.IsPresent + [int]$Remove.IsPresent) 
     throw 'Choose exactly one of -Install, -Status or -Remove.'
 }
 if ($Install) {
-    $existing = Get-Command codex -ErrorAction SilentlyContinue
+    $existing = Get-Command codex -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($existing -and $existing.CommandType -in @('Function', 'Alias')) {
         if ($existing.CommandType -ne 'Function' -or -not $existing.Definition.Contains('--encoded-args $railEncoded')) {
             throw 'An existing codex alias/function needs to be preserved and reconciled before setup.'
@@ -21,13 +21,16 @@ if ($Install) {
 }
 $python = $null
 foreach ($candidate in @('python.exe', 'python3.exe', 'py.exe')) {
-    $command = Get-Command $candidate -CommandType Application -ErrorAction SilentlyContinue
-    if (-not $command) { continue }
-    $major = & $command.Source -c 'import sys; print(int(sys.version_info >= (3, 11)))' 2>$null
-    if ($LASTEXITCODE -eq 0 -and "$major".Trim() -eq '1') {
-        $python = $command.Source
-        break
+    foreach ($command in @(Get-Command $candidate -CommandType Application -ErrorAction SilentlyContinue)) {
+        if (-not $command) { continue }
+        try { $major = & $command.Source -c 'import sys; print(int(sys.version_info >= (3, 11)))' 2>$null }
+        catch { continue }
+        if ($LASTEXITCODE -eq 0 -and "$major".Trim() -eq '1') {
+            $python = $command.Source
+            break
+        }
     }
+    if ($python) { break }
 }
 if (-not $python) { throw 'Python 3.11 or newer is required. Install Python, then retry.' }
 $mode = if ($Install) { '--install' } elseif ($Status) { '--status' } else { '--remove' }

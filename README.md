@@ -41,6 +41,8 @@ Codex는 사용자가 신뢰하지 않은 훅을 실행하지 않습니다. **`p
 
 자동 설정은 시스템 패키지를 설치하지 않습니다. tmux·Node·Python 등이 없으면 필요한 조치를 안내합니다. Windows에서는 설치된 PowerShell 5.1과 7의 ConsoleHost 프로필을 설정하며, 다른 호스트용 프로필은 아래 수동 설정을 사용합니다. 자동 설정만 끄려면 `CODEX_RAIL_AUTO_SETUP_DISABLE=1`을 환경 변수로 지정하세요.
 
+제거 스크립트로 연동을 제거하면 자동 설정도 중지해 다음 세션에서 다시 설치하지 않습니다. 수동 설치를 다시 실행하면 자동 설정을 재개합니다.
+
 수동으로 설정하려면 `codex plugin add codex-rail@blossom-local --json`의 출력에서 `installedPath`를 확인한 뒤 해당 폴더에서 `python3 scripts/setup.py --install`과 `python3 scripts/setup.py --status`를 실행합니다. GitHub 저장소를 직접 복제할 필요는 없습니다. `blossom-local`은 이 저장소의 마켓플레이스 식별자입니다.
 
 ### macOS + zsh: 설치됐는데 열차가 안 나올 때

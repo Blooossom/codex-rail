@@ -72,6 +72,7 @@ export function main() {
     ? join(process.env.APPDATA || join(homedir(), 'AppData', 'Roaming'), 'codex-rail')
     : join(process.env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'codex-rail');
   const lock = join(directory, 'auto-setup.lock');
+  if (existsSync(join(directory, 'auto-setup.disabled'))) return;
   let locked = false;
   try {
     mkdirSync(directory, { recursive: true });

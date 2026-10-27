@@ -72,6 +72,8 @@ def install(args, root, find_node, backup, begin, end, block):
             rc.write_text(updated, encoding='utf-8-sig')
         for path in [source, settings]:
             path.unlink(missing_ok=True)
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory/'auto-setup.disabled').touch()
         print('Codex Rail PowerShell integration removed. Open a new PowerShell tab.')
         return
     existing = block.sub('', text)
@@ -95,5 +97,6 @@ def install(args, root, find_node, backup, begin, end, block):
             backup(rc)
         rc.parent.mkdir(parents=True, exist_ok=True)
         rc.write_text(updated, encoding='utf-8-sig')
+    (directory/'auto-setup.disabled').unlink(missing_ok=True)
     print(json.dumps({'configured': True, 'plugin_root': str(root), 'node': node, 'native': native,
                       'shell_file': str(rc), 'activate_current_shell': f'. {quote(source)}'}))

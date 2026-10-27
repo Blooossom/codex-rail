@@ -92,7 +92,8 @@ def main():
             raise SystemExit(subprocess.call([node, str(root/'src/cli.mjs'), *args], env=env))
         os.execve(node, [node, str(root/'src/cli.mjs'), *args], env)
     if os.name == 'nt':
-        command = settings.get('native_command', [native])
+        from powershell import native_command
+        command = settings.get('native_command') or native_command(Path(native), shutil.which('node') or 'node.exe')
         raise SystemExit(subprocess.call([*command, *args]))
     os.execv(native, [native, *args])
 

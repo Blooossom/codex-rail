@@ -31,6 +31,13 @@ test('trusted hook installs zsh integration once, refreshes stale installs and p
   settings.plugin_root=join(directory,'old-version');writeFileSync(settingsPath,JSON.stringify(settings));
   assert.match(run(),/integration installed/);
   assert.equal(JSON.parse(readFileSync(settingsPath,'utf8')).plugin_root,root);
+  const removed=spawnSync('python3',[join(root,'scripts','setup.py'),'--remove'],{env,encoding:'utf8'});
+  assert.equal(removed.status,0,removed.stderr);
+  assert.equal(run(),'');
+  assert(!existsSync(join(config,'codex-rail','integration.zsh')));
+  const restored=spawnSync('python3',[join(root,'scripts','setup.py'),'--install'],{env,encoding:'utf8'});
+  assert.equal(restored.status,0,restored.stderr);
+  assert(!existsSync(join(config,'codex-rail','auto-setup.disabled')));
   const custom='function codex() { echo custom; }\n';writeFileSync(join(profile,'.zshrc'),custom);
   assert.match(run(),/alias\/function/);
   assert.equal(readFileSync(join(profile,'.zshrc'),'utf8'),custom);

@@ -60,6 +60,8 @@ def main():
             rc.write_text(updated)
         for p in [source, settings]:
             p.unlink(missing_ok=True)
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory/'auto-setup.disabled').touch()
         print('Codex Rail shell integration removed. New shells use native codex.')
         return
     existing = BLOCK.sub('',text)
@@ -93,6 +95,7 @@ function codex() {{
         if rc.exists():
             backup(rc)
         rc.write_text(updated)
+    (directory/'auto-setup.disabled').unlink(missing_ok=True)
     print(json.dumps({'configured':True,'plugin_root':str(root),'node':node,'native':native,
                       'activate_current_shell':f'source {shlex.quote(str(source))}'},ensure_ascii=False))
 
