@@ -50,8 +50,8 @@ def plugin_enabled(plugin_id, home=None, cwd=None):
         if not path.is_file():
             continue
         try:
-            config = tomllib.loads(path.read_text())
-        except (OSError, tomllib.TOMLDecodeError):
+            config = tomllib.loads(path.read_text(encoding='utf-8-sig'))
+        except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError):
             return False
         value = config.get('plugins', {}).get(plugin_id, {}).get('enabled')
         if value is not None:

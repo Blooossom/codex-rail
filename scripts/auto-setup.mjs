@@ -62,8 +62,9 @@ function windows(directory, settings) {
     if (result.status !== 0) failed = true;
     else if (result.stdout.trim()) installed = true;
   }
-  if (installed) message('Codex Rail PowerShell integration installed. Open a new PowerShell tab and run codex.');
-  if (failed) message('Codex Rail: automatic PowerShell setup could not finish for one edition. Run its setup skill; execution policy is unchanged.');
+  if (installed && failed) message('Codex Rail integration installed for an available PowerShell edition; another edition needs the setup skill. Open a new configured PowerShell tab. Execution policy is unchanged.');
+  else if (installed) message('Codex Rail PowerShell integration installed. Open a new PowerShell tab and run codex.');
+  else if (failed) message('Codex Rail: automatic PowerShell setup could not finish. Run its setup skill; execution policy is unchanged.');
 }
 
 export function main() {

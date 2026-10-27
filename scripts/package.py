@@ -9,9 +9,9 @@ import zipfile
 
 def main():
     root = Path(__file__).resolve().parent.parent
-    plugin = json.loads((root / 'plugin.json').read_text())
-    package = json.loads((root / 'package.json').read_text())
-    lock = json.loads((root / 'package-lock.json').read_text())
+    plugin = json.loads((root / 'plugin.json').read_text(encoding='utf-8'))
+    package = json.loads((root / 'package.json').read_text(encoding='utf-8'))
+    lock = json.loads((root / 'package-lock.json').read_text(encoding='utf-8'))
     version = plugin['version']
     if not re.fullmatch(r'\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?', version):
         raise SystemExit('Invalid plugin version.')
