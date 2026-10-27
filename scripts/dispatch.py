@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Route interactive shell invocations; never shadow the native executable on PATH."""
+"""Route interactive invocations while retaining a separate native executable."""
 import json
 import base64
 import os
@@ -16,6 +16,31 @@ NATIVE_COMMANDS = {'exec', 'e', 'review', 'login', 'logout', 'mcp', 'plugin', 'a
                    'remote-control', 'app', 'completion', 'update', 'doctor', 'sandbox',
                    'debug', 'apply', 'a', 'queue', 'archive', 'delete', 'migrate-rollouts',
                    'migrate-nfs-db', 'unarchive', 'cloud', 'exec-server', 'features', 'help', 'execpolicy'}
+
+SHIM_MARKER = b'# Managed by Codex Rail launcher'
+
+def native_executable(saved=None, shim_directory=None):
+    """Never select our own launcher, including when settings are missing or damaged."""
+    candidates = []
+    for entry in os.environ.get('PATH', '').split(os.pathsep):
+        directory = Path(entry or '.')
+        if shim_directory and directory.resolve() == Path(shim_directory).resolve():
+            continue
+        candidate = directory/'codex'
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            candidates.append(candidate.absolute())
+    if isinstance(saved, str) and saved:
+        candidates.append(Path(saved))
+    for candidate in candidates:
+        try:
+            with candidate.open('rb') as stream:
+                if SHIM_MARKER in stream.read(256):
+                    continue
+            if candidate.is_file() and os.access(candidate, os.X_OK):
+                return str(candidate)
+        except OSError:
+            continue
+    return None
 
 def should_wrap(args):
     """Parse only before the prompt; quoted prompt content is never interpreted as flags."""
@@ -67,14 +92,21 @@ def main():
             raise SystemExit('Invalid PowerShell arguments.')
     elif args[:1] == ['--']:
         args = args[1:]
-    native = shutil.which('codex')
+    native = None
     settings = {}
     try:
         settings = json.loads(settings_path.read_text(encoding='utf-8'))
-        if Path(settings['native']).is_file():
-            native = settings['native']
+        if not isinstance(settings, dict):
+            settings = {}
     except (OSError, ValueError, KeyError):
         pass
+    if not all(isinstance(settings.get(key), str) for key in ['native','plugin_root','node','plugin_id']):
+        settings = {}
+    if os.name == 'nt':
+        configured = settings.get('native')
+        native = configured if configured and Path(configured).is_file() else shutil.which('codex')
+    else:
+        native = native_executable(settings.get('native'), settings_path.parent/'bin')
     if not native:
         raise SystemExit('Native codex executable was not found.')
     root = Path(settings.get('plugin_root', '/nonexistent'))
@@ -94,7 +126,8 @@ def main():
         os.execve(node, [node, str(root/'src/cli.mjs'), *args], env)
     if os.name == 'nt':
         from powershell import native_command
-        command = settings.get('native_command') or native_command(Path(native), shutil.which('node') or 'node.exe')
+        command = settings.get('native_command') if native == settings.get('native') else None
+        command = command or native_command(Path(native), shutil.which('node') or 'node.exe')
         raise SystemExit(subprocess.call([*command, *args]))
     os.execv(native, [native, *args])
 

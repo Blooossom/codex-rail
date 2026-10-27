@@ -18,6 +18,18 @@ jobs:
         with:
           python-version: '3.11'
       - run: npm install --global @openai/codex@0.164.0
+      - name: Install real zsh and tmux for terminal integration tests
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          if ! command -v zsh >/dev/null || ! command -v tmux >/dev/null; then
+            if [[ "$RUNNER_OS" == "macOS" ]]; then
+              brew install zsh tmux
+            else
+              sudo apt-get update
+              sudo apt-get install -y zsh tmux
+            fi
+          fi
       - run: node --test test/*.test.mjs
         shell: bash
       - run: python -m unittest discover -s test -p 'test_*.py'

@@ -6,7 +6,6 @@ import json
 import os
 from pathlib import Path
 import re
-import shlex
 import shutil
 import subprocess
 import sys
@@ -48,10 +47,13 @@ def main():
     rc = Path(os.environ.get('ZDOTDIR', Path.home()))/'.zshrc'
     source = directory/'integration.zsh'
     settings = directory/'settings.json'
+    launchers = directory/'bin'
     text = rc.read_text() if rc.exists() else ''
     if args.status:
         print(json.dumps({'plugin_root':str(root), 'shell_file':str(rc), 'integration':str(source),
-                          'configured':BEGIN in text and source.is_file() and settings.is_file()}, ensure_ascii=False))
+                          'launcher':str(launchers/'codex-rail'),
+                          'configured':BEGIN in text and source.is_file() and settings.is_file()
+                            and (launchers/'codex').is_file() and (launchers/'codex-rail').is_file()}, ensure_ascii=False))
         return
     if args.remove:
         updated = BLOCK.sub('',text)
@@ -60,36 +62,43 @@ def main():
             rc.write_text(updated)
         for p in [source, settings]:
             p.unlink(missing_ok=True)
+        for p in [launchers/'codex', launchers/'codex-rail']:
+            if p.is_file() and not p.is_symlink() and b'# Managed by Codex Rail launcher' in p.read_bytes()[:256]:
+                p.unlink()
         directory.mkdir(parents=True, exist_ok=True)
         (directory/'auto-setup.disabled').touch()
         print('Codex Rail shell integration removed. New shells use native codex.')
         return
-    existing = BLOCK.sub('',text)
-    if re.search(r'^\s*(?:alias\s+codex=|(?:function\s+)?codex\s*\()', existing, re.M):
-        raise SystemExit('An existing codex alias/function needs to be preserved and reconciled before setup.')
-    native = shutil.which('codex')
+    from dispatch import native_executable
+    from zsh import launcher, integration
+    from shlex import quote
+    try:
+        previous = json.loads(settings.read_text(encoding='utf-8'))
+        if not isinstance(previous, dict):
+            previous = {}
+    except (OSError, ValueError):
+        previous = {}
+    native = native_executable(previous.get('native'), launchers)
     if not native:
         raise SystemExit('Codex CLI is required.')
     if not shutil.which('tmux'):
         raise SystemExit('tmux is required. Install with brew install tmux, then rerun setup.')
     node = find_node()
     directory.mkdir(parents=True, exist_ok=True)
+    launchers.mkdir(mode=0o700, exist_ok=True)
+    for name in ['codex', 'codex-rail']:
+        target = launchers/name
+        if target.is_symlink() or (target.exists() and b'# Managed by Codex Rail launcher' not in target.read_bytes()[:256]):
+            raise SystemExit(f'An unrelated launcher already exists at {target}; setup left it unchanged.')
     settings.write_text(json.dumps({'plugin_id':args.plugin_id,'plugin_root':str(root),
-                                    'native':native,'node':node},indent=2)+'\n')
+                                    'native':native,'node':node,'integration_mode':'path'},indent=2)+'\n')
     settings.chmod(0o600)
-    python = shlex.quote(sys.executable)
-    dispatcher = shlex.quote(str(root/'scripts/dispatch.py'))
-    config = shlex.quote(str(settings))
-    source.write_text(f'''# Managed by the Codex Rail plugin. Native executable stays untouched.
-function codex() {{
-  if [[ ! -t 0 || ! -t 1 || "${{CODEX_RAIL_DISABLE:-0}}" == 1 || ! -f {dispatcher} ]]; then
-    command codex "$@"
-    return $?
-  fi
-  {python} {dispatcher} {config} -- "$@"
-}}
-''')
-    block=f'{BEGIN}\n[[ -r {shlex.quote(str(source))} ]] && source {shlex.quote(str(source))}\n{END}\n'
+    for name in ['codex', 'codex-rail']:
+        target = launchers/name
+        target.write_text(launcher(sys.executable, root/'scripts/dispatch.py', settings, native, launchers))
+        target.chmod(0o700)
+    source.write_text(integration(launchers, native))
+    block=f'{BEGIN}\n[[ -r {quote(str(source))} ]] && source {quote(str(source))}\n{END}\n'
     updated=BLOCK.sub('',text).rstrip()+'\n\n'+block
     if updated != text:
         if rc.exists():
@@ -97,7 +106,7 @@ function codex() {{
         rc.write_text(updated)
     (directory/'auto-setup.disabled').unlink(missing_ok=True)
     print(json.dumps({'configured':True,'plugin_root':str(root),'node':node,'native':native,
-                      'activate_current_shell':f'source {shlex.quote(str(source))}'},ensure_ascii=False))
+                      'activate_current_shell':f'source {quote(str(source))}'},ensure_ascii=False))
 
 def backup(path):
     timestamp=datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')

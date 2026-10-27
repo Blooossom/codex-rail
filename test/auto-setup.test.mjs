@@ -39,8 +39,8 @@ test('trusted hook installs zsh integration once, refreshes stale installs and p
   assert.equal(restored.status,0,restored.stderr);
   assert(!existsSync(join(config,'codex-rail','auto-setup.disabled')));
   const custom='function codex() { echo custom; }\n';writeFileSync(join(profile,'.zshrc'),custom);
-  assert.match(run(),/alias\/function/);
-  assert.equal(readFileSync(join(profile,'.zshrc'),'utf8'),custom);
+  assert.match(run(),/integration installed/);
+  assert(readFileSync(join(profile,'.zshrc'),'utf8').startsWith(custom));
 });
 
 test('automatic setup can be disabled without writing shell configuration', t => {

@@ -25,7 +25,7 @@ node src/cli.mjs --demo  # 이 폴더에서 실행하는 데모
 | 환경 | 추가 요구사항 | 지원 범위 |
 | --- | --- | --- |
 | macOS + zsh | tmux, 로컬 app-server daemon | 실제 터미널 검증 완료 |
-| Windows PowerShell 5.1 / PowerShell 7 | Windows Terminal (`wt.exe`), native Codex CLI | 0.3.1 실험 지원. 자동 테스트 대상이며 실제 Windows Terminal 화면은 미검증 |
+| Windows PowerShell 5.1 / PowerShell 7 | Windows Terminal (`wt.exe`), native Codex CLI | 0.3.2 실험 지원. 자동 테스트 대상이며 실제 Windows Terminal 화면은 미검증 |
 | Linux + zsh | tmux, 로컬 app-server daemon | 자동 테스트 대상. 실제 사용은 미검증 |
 
 Windows에서 WSL이나 tmux는 필요하지 않습니다. ZIP 다운로드나 `npm install` 없이 아래 명령으로 설치할 수 있습니다.
@@ -37,7 +37,7 @@ codex plugin add codex-rail@blossom-local
 
 설치 후 새 Codex 세션에서 **`/hooks` → `SessionStart` → `Codex Rail: automatic shell setup`**을 선택하세요. 출처가 `Plugin - codex-rail@blossom-local`이고 명령에 `auto-setup.mjs`가 있는지 검토한 뒤 훅을 신뢰합니다. 그 다음 새 Codex 세션을 시작하면 필요한 셸 연동을 자동으로 설치하고, 완료 안내가 나옵니다. **새 터미널 탭**에서 `codex`를 실행하면 열차가 표시됩니다. 이후에는 기존 연동을 확인하고 버전 업데이트 시 실행 경로를 갱신합니다.
 
-0.3.0은 Codex 0.164.0에서 플러그인 훅이 목록에 나타나지 않는 문제가 있었습니다. 0.3.1은 `.codex-plugin/plugin.json` 호환 형식을 사용해 이를 수정합니다. `Unnamed hook`이 보인다는 이유만으로 신뢰를 바꾸지 말고 출처와 명령을 확인하세요. `PermissionRequest`에는 이 자동 설정 훅이 없습니다.
+0.3.0은 Codex 0.164.0에서 플러그인 훅이 목록에 나타나지 않는 문제가 있었습니다. 0.3.1부터 `.codex-plugin/plugin.json` 호환 형식으로 이를 수정했습니다. `Unnamed hook`이 보인다는 이유만으로 신뢰를 바꾸지 말고 출처와 명령을 확인하세요. `PermissionRequest`에는 이 자동 설정 훅이 없습니다.
 
 Codex는 사용자가 신뢰하지 않은 훅을 실행하지 않습니다. **`plugin add`만 실행하거나 훅을 신뢰하지 않은 상태에서는 셸 연동이 자동 설치되지 않습니다.** 훅을 사용하지 않으려면 새 Codex 세션에서 **“Codex Rail setup 스킬로 터미널 연동을 설치하고 상태까지 확인해줘”**라고 요청하거나 아래 수동 명령을 사용하세요. `/plugins` 활성화나 자동 설정으로 이미 실행 중인 부모 셸의 명령 해석이 바뀌지는 않습니다. [공식 훅 신뢰 안내](https://learn.chatgpt.com/docs/hooks)
 
@@ -59,7 +59,11 @@ source "${XDG_CONFIG_HOME:-$HOME/.config}/codex-rail/integration.zsh"
 codex
 ```
 
-상태 출력이 `"configured": true`여야 합니다. 터미널 높이가 20줄 미만이면 기본 Codex로 전달하므로 창을 키워 주세요. 기존 `codex` 별칭이나 함수가 있으면 설정이 중단됩니다. 기존 설정을 임의로 지우지 말고 오류 내용을 확인하세요.
+상태 출력이 `"configured": true`여야 합니다. 터미널 높이가 20줄 미만이면 기본 Codex로 전달하므로 창을 키워 주세요.
+
+0.3.2부터 zsh의 기존 `codex` 별칭·함수를 보존하면서 연결합니다. 예를 들어 `alias codex='codex --yolo'`나 `codex() { command codex --yolo "$@"; }`를 삭제할 필요가 없습니다. 그 안에서 실행하는 Codex를 표시용 실행기로 연결하므로 기존 옵션, 작업 폴더와 환경 변수를 유지합니다. 설정은 전용 `bin` 폴더를 PATH 앞에 추가하며 실제 Codex 실행 파일은 수정하지 않습니다.
+
+복잡한 사용자 함수가 Codex 자체를 실행하지 않거나 `command /절대경로/codex`로 실행기를 명시적으로 우회하는 경우에는 기존 동작을 유지합니다. 이때는 새 탭에서 **`codex-rail`**을 실행하면 사용자 정의 `codex` 명령과 별개로 열차를 시작할 수 있습니다. 필요한 모델·권한 옵션은 이 명령에도 명시해서 전달하세요. 셸 연동 제거 후 새 탭에서는 원래 별칭·함수와 PATH를 사용합니다.
 
 ### Windows PowerShell: 수동 설정
 
@@ -105,19 +109,19 @@ macOS/zsh에서는 최소 높이 20줄, 권장 너비 80칸이며 열차는 6줄
 
 tmux의 대화 영역에서 마우스 휠이나 트랙패드로 위아래로 스크롤하면 이전 대화 출력을 볼 수 있습니다. 맨 아래까지 내리거나 스크롤 모드에서 `q`를 누르면 입력 화면으로 돌아옵니다. 키보드로는 `Ctrl+B`를 누른 다음 `[`를 눌러 스크롤 모드에 들어갈 수 있습니다. 방향키 위·아래는 기존처럼 입력 기록을 탐색합니다. 0.2.0의 휠이 입력 기록을 넘기던 문제는 0.2.1에서 수정했습니다.
 
-`codex exec`, 로그인, 업데이트, 플러그인 관리, 도움말, 버전 조회, 명시적인 원격 연결, 파이프 실행은 원래 Codex로 전달됩니다. `CODEX_RAIL_DISABLE=1 codex` 또는 `command codex`로 일시적으로 우회할 수 있습니다. `/plugins`에서 비활성화하면 다음 실행부터 원래 Codex를 사용합니다. 셸 연동을 완전히 지우려면 `python3 <설치된 플러그인>/scripts/setup.py --remove`를 실행합니다.
+`codex exec`, 로그인, 업데이트, 플러그인 관리, 도움말, 버전 조회, 명시적인 원격 연결, 파이프 실행은 원래 Codex로 전달됩니다. `CODEX_RAIL_DISABLE=1 codex`로 일시적으로 우회할 수 있습니다. 0.3.2의 zsh에서는 `command codex`도 PATH의 실행기를 거치므로 우회 명령으로 사용하지 않습니다. `/plugins`에서 비활성화하면 다음 실행부터 원래 Codex를 사용합니다. 셸 연동을 완전히 지우려면 `python3 <설치된 플러그인>/scripts/setup.py --remove`를 실행합니다.
 
-`CODEX_RAIL_REDUCED_MOTION=1 codex`로 동작을 줄이고, `NO_COLOR=1 codex`로 색을 끌 수 있습니다. 플러그인 설정은 `codex-rail`이라는 별도 명령을 PATH에 추가하지 않습니다.
+`CODEX_RAIL_REDUCED_MOTION=1 codex`로 동작을 줄이고, `NO_COLOR=1 codex`로 색을 끌 수 있습니다. zsh에서는 `codex-rail` 명령으로도 열차를 실행할 수 있습니다.
 
 데모 키: `1` 작업, `2` 승인 대기, `3` 완료, `4` 오류, `5` 압축, `m` 모델 변경, `f` Fast 전환, `q` 종료. 데모는 가상 데이터이며 모델을 호출하지 않습니다.
 
-## 소규모 테스트 배포 (0.3.1)
+## 소규모 테스트 배포 (0.3.2)
 
 아래 ZIP 설치 안내는 macOS + zsh용입니다. Windows는 위 PowerShell 설치 안내를 따르세요. 개발 환경의 Codex CLI는 0.164.0이며 다른 버전의 호환성은 별도 확인이 필요합니다. Node 22 이상, Python 3.11 이상, tmux와 로그인된 Codex CLI를 준비하세요. WebSocket 라이브러리가 포함돼 있어 `npm install`은 필요하지 않습니다.
 
 ### 받는 사람: 설치
 
-전달받은 `codex-rail-0.3.1-test.zip`을 압축 해제한 뒤 `codex-rail-0.3.1` 폴더를 계속 보관할 위치로 옮기세요. 아래 명령은 그 폴더에서 실행합니다. 경로에 공백이 있어도 됩니다. 설치 후 폴더를 옮기거나 삭제하면 셸 연동을 다시 설정해야 합니다.
+전달받은 `codex-rail-0.3.2-test.zip`을 압축 해제한 뒤 `codex-rail-0.3.2` 폴더를 계속 보관할 위치로 옮기세요. 아래 명령은 그 폴더에서 실행합니다. 경로에 공백이 있어도 됩니다. 설치 후 폴더를 옮기거나 삭제하면 셸 연동을 다시 설정해야 합니다.
 
 ```sh
 node --version
@@ -138,7 +142,7 @@ python3 scripts/setup.py --install
 python3 scripts/setup.py --status
 ```
 
-설정은 `.zshrc`에 Codex Rail 블록을 추가하며, 기존 파일이 있으면 백업을 만듭니다. `ZDOTDIR`을 사용하는 경우 해당 폴더의 `.zshrc`가 대상입니다. 새 터미널 탭에서 `codex`를 실행하면 열차가 표시됩니다. 창은 최소 20줄, 권장 80칸 이상으로 열어 주세요. 기존 `codex` 별칭이나 함수가 있으면 설치가 중단되므로 오류 내용을 제작자에게 알려 주세요.
+설정은 `.zshrc`에 Codex Rail 블록을 추가하며, 기존 파일이 있으면 백업을 만듭니다. `ZDOTDIR`을 사용하는 경우 해당 폴더의 `.zshrc`가 대상입니다. 기존 `codex` 별칭·함수 정의는 유지합니다. 새 터미널 탭에서 `codex` 또는 `codex-rail`을 실행하면 열차가 표시됩니다. 창은 최소 20줄, 권장 80칸 이상으로 열어 주세요.
 
 ### 확인할 항목과 피드백
 
@@ -161,7 +165,7 @@ python3 scripts/setup.py --remove
 codex plugin remove codex-rail@blossom-local
 ```
 
-제거 후 새 터미널 탭을 열어 주세요. 이미 열린 탭의 함수까지 즉시 지우려면 `unfunction codex`를 실행합니다. `blossom-local`에 다른 플러그인이 없다면 `codex plugin marketplace remove blossom-local`로 마켓플레이스도 제거할 수 있습니다. 그 다음 압축 해제한 폴더를 삭제합니다.
+제거 후 새 터미널 탭을 열어 주세요. 사용자가 만든 `codex` 별칭이나 함수는 지울 필요가 없습니다. `blossom-local`에 다른 플러그인이 없다면 `codex plugin marketplace remove blossom-local`로 마켓플레이스도 제거할 수 있습니다. 그 다음 압축 해제한 폴더를 삭제합니다.
 
 ### 만드는 사람: 배포 파일 생성
 
@@ -171,7 +175,7 @@ python3 -m unittest discover -s test -p 'test_*.py'
 python3 scripts/package.py
 ```
 
-`dist/codex-rail-0.3.1-test.zip`과 같은 이름의 `.zip.sha256` 파일을 테스트 참여자에게 함께 전달합니다. ZIP에는 실행 코드, 설치 스킬, 마켓플레이스 정보, 안내, 기존 테스트와 `ws` 라이선스가 들어갑니다. `node_modules`, Python 캐시, 로그, 개인 설정은 포함하지 않습니다. 체크섬은 두 파일이 있는 폴더에서 `shasum -a 256 -c codex-rail-0.3.1-test.zip.sha256`으로 확인할 수 있습니다.
+`dist/codex-rail-0.3.2-test.zip`과 같은 이름의 `.zip.sha256` 파일을 테스트 참여자에게 함께 전달합니다. ZIP에는 실행 코드, 설치 스킬, 마켓플레이스 정보, 안내, 기존 테스트와 `ws` 라이선스가 들어갑니다. `node_modules`, Python 캐시, 로그, 개인 설정은 포함하지 않습니다. 체크섬은 두 파일이 있는 폴더에서 `shasum -a 256 -c codex-rail-0.3.2-test.zip.sha256`으로 확인할 수 있습니다.
 
 다음 배포에서는 `.codex-plugin/plugin.json`, `package.json`, `package-lock.json`의 버전을 함께 올리고 위 안내의 버전과 파일 이름도 갱신하세요. 참여자는 이전 연동과 플러그인을 제거한 뒤 새 폴더에서 다시 설치합니다.
 
@@ -201,5 +205,7 @@ python3 -m unittest discover -s test -p 'test_*.py'
 ```
 
 주간 한도 선택, 스레드 분리, 토큰 계산, 상태 전이, 모델 및 Fast 변경, 화면 너비, 요청 전달과 승인 비개입을 검증합니다.
+
+zsh 검증은 실제 새 셸과 tmux를 사용합니다. 기본 명령, 옵션이 있는 별칭, `command codex` 함수, 일반 절대경로 호출을 포함한 7가지 진입 방식에서 실제 6줄 열차 창이 표시되는지 확인합니다. 따옴표·빈 문자열·한글 인자, 함수의 작업 폴더·환경 변수·종료 코드, 파이프 입력, 반복 설치, 제거, 손상된 설정의 기본 CLI 전달도 확인합니다. 대화 응답을 생성하는 모델 호출은 사용하지 않습니다.
 
 Windows 자동 테스트는 PowerShell 5.1과 7에서 임시 프로필의 설치·백업·제거, 빈 값·따옴표·한글을 포함한 인자 보존, 기본 명령·파이프 전달을 확인합니다. 별도로 loopback 인증, 브라우저 거부, stdio 연결과 종료를 검증합니다. 실제 Windows Terminal GUI에서의 분할 화면·크기 변경·종료·실제 Codex 사용은 수동 확인이 남아 있습니다.

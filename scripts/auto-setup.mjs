@@ -36,7 +36,9 @@ function python() {
 function zsh(directory, settings) {
   const source = join(directory, 'integration.zsh');
   const profile = join(process.env.ZDOTDIR || homedir(), '.zshrc');
-  if (current(settings, source) && read(profile).includes('# >>> Codex Rail plugin >>>')) return;
+  if (current(settings, source) && settings.integration_mode === 'path'
+    && existsSync(join(directory,'bin','codex')) && existsSync(join(directory,'bin','codex-rail'))
+    && read(profile).includes('# >>> Codex Rail plugin >>>')) return;
   if (basename(process.env.SHELL || '') !== 'zsh') {
     message('Codex Rail: automatic setup supports zsh and Windows PowerShell. Run the setup skill for this shell.');
     return;
@@ -44,7 +46,7 @@ function zsh(directory, settings) {
   const executable = python();
   if (!executable) { message('Codex Rail: install Python 3.11 or newer, then start a new Codex session.'); return; }
   const result = run(executable, [join(root, 'scripts', 'setup.py'), '--install', '--plugin-id', pluginId(settings)]);
-  if (result.status === 0) message('Codex Rail shell integration installed. Open a new terminal tab and run codex.');
+  if (result.status === 0) message('Codex Rail shell integration installed. Open a new terminal tab and run codex. The codex-rail command is also available for custom wrappers.');
   else message(`Codex Rail automatic setup needs attention: ${(result.stderr || result.stdout || 'Run the setup skill.').trim().slice(0,400)}`);
 }
 

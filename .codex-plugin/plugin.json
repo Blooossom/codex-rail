@@ -1,6 +1,6 @@
 {
   "name": "codex-rail",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A compact animated train below Codex CLI. Setup keeps the normal codex command.",
   "skills": "./skills",
   "hooks": "./hooks/hooks.json",
