@@ -1,24 +1,26 @@
 """Exercise wheel input through the real launcher, tmux and a pseudo terminal."""
-import fcntl
 import os
 from pathlib import Path
-import pty
 import select
 import shutil
 import struct
 import subprocess
 import sys
 import tempfile
-import termios
 import threading
 import time
 import unittest
+
+if os.name != 'nt':
+    import fcntl
+    import pty
+    import termios
 
 
 ROOT = Path(__file__).resolve().parent.parent
 
 
-@unittest.skipUnless(shutil.which('tmux') and shutil.which('node'), 'tmux and Node are required')
+@unittest.skipUnless(os.name != 'nt' and shutil.which('tmux') and shutil.which('node'), 'POSIX, tmux and Node are required')
 class TerminalTests(unittest.TestCase):
     def test_wheel_scrolls_transcript_without_changing_prompt(self):
         with tempfile.TemporaryDirectory(prefix='rail-scroll-') as temporary:

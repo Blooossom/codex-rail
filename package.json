@@ -1,11 +1,11 @@
 {
   "name": "codex-rail",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "A small train beneath the Codex CLI, driven by app-server events.",
   "bin": { "codex-rail": "src/cli.mjs" },
-  "scripts": { "test": "node --test test/*.test.mjs", "demo": "node src/cli.mjs --demo", "start": "node src/cli.mjs" },
+  "scripts": { "test": "node --test", "demo": "node src/cli.mjs --demo", "start": "node src/cli.mjs" },
   "engines": { "node": ">=22" },
   "dependencies": { "ws": "8.22.0" }
 }

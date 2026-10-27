@@ -23,9 +23,9 @@ Examples:
 ASTRA = violet · SOL = amber · passengers = context · route = weekly quota
 Steam = Fast mode · wheels/signal/flag = work/approval/completion
 
-Requires Node 22+, tmux and Codex CLI with app-server proxy support.
-The train uses a private local socket and does not replace the codex binary.
-Exit Codex normally to close the train. Ctrl+B then D also closes this wrapper session.
+Requires Node 22+ and Codex CLI with app-server support.
+macOS/Linux: tmux. Windows: Windows Terminal and PowerShell setup.
+Exit Codex normally to close the train. On tmux, Ctrl+B then D also closes this wrapper session.
 CODEX_RAIL_REDUCED_MOTION=1 disables motion. NO_COLOR=1 disables colors.`);
   process.exit(0);
 }
@@ -33,7 +33,10 @@ if(args[0]==='--demo') {
   const child=spawn(process.execPath,[join(here,'hud.mjs'),'--demo'],{stdio:'inherit'});
   child.on('exit',code=>process.exit(code??1));
 } else {
-  await launch();
+  if (process.platform === 'win32') {
+    const { launchWindows } = await import('./windows.mjs');
+    await launchWindows(args);
+  } else await launch();
 }
 
 async function launch(){

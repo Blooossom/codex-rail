@@ -1,6 +1,6 @@
 # Codex Rail
 
-기존 Codex CLI 입력창 아래에 고정된 작은 열차를 표시하는 로컬 플러그인입니다. 플러그인의 최초 설정이 zsh 실행 연동을 설치하므로 평소처럼 `codex`를 입력하면 됩니다. 내부적으로 공식 CLI와 별도의 표시용 프로세스를 실행하며, Codex 자체의 TUI 코드는 수정하지 않습니다.
+기존 Codex CLI 입력창 아래에 작은 열차를 표시하는 플러그인입니다. 최초 설정으로 zsh 또는 Windows PowerShell에 실행 연동을 설치하면 평소처럼 `codex`를 입력하면 됩니다. 내부적으로 공식 CLI와 별도의 표시용 프로세스를 실행하며, Codex 자체의 TUI 코드는 수정하지 않습니다.
 
 ```sh
 codex
@@ -20,18 +20,54 @@ node src/cli.mjs --demo  # 이 폴더에서 실행하는 데모
 
 ## GitHub 마켓플레이스에서 설치
 
-Node 22 이상, Python 3.11 이상, tmux, 로컬 app-server daemon을 지원하는 Codex CLI가 필요합니다. 개발 환경은 Codex CLI 0.164.0입니다. 런타임의 WebSocket 의존성은 `vendor/ws`에 라이선스와 함께 포함돼 있습니다.
+공통으로 Node 22 이상, Python 3.11 이상, 로그인된 Codex CLI가 필요합니다. 개발 환경은 Codex CLI 0.164.0입니다. 런타임의 WebSocket 의존성은 `vendor/ws`에 라이선스와 함께 포함돼 있습니다.
 
-현재 테스트 대상은 macOS + zsh입니다. Linux와 Windows는 아직 검증하지 않았습니다. ZIP 다운로드나 `npm install` 없이 아래 명령으로 설치할 수 있습니다.
+| 환경 | 추가 요구사항 | 지원 범위 |
+| --- | --- | --- |
+| macOS + zsh | tmux, 로컬 app-server daemon | 실제 터미널 검증 완료 |
+| Windows PowerShell 5.1 / PowerShell 7 | Windows Terminal (`wt.exe`), native Codex CLI | 0.3.0 실험 지원. 자동 테스트 대상이며 실제 Windows Terminal 화면은 미검증 |
+| Linux + zsh | tmux, 로컬 app-server daemon | 자동 테스트 대상. 실제 사용은 미검증 |
+
+Windows에서 WSL이나 tmux는 필요하지 않습니다. ZIP 다운로드나 `npm install` 없이 아래 명령으로 설치할 수 있습니다.
 
 ```sh
 codex plugin marketplace add Blooossom/codex-rail
 codex plugin add codex-rail@blossom-local
 ```
 
-설치 후 새 Codex 세션에서 **“Codex Rail 설정해줘”**라고 요청해 설치된 플러그인의 setup 스킬을 실행하세요. 이 최초 설정이 zsh 연동을 설치합니다. 그 다음 **새 터미널 탭**에서 평소처럼 `codex`를 실행하면 열차가 표시됩니다. 이미 열린 셸에서는 `source ~/.config/codex-rail/integration.zsh`를 한 번 실행하세요. `/plugins`에서 활성화하는 것만으로 이미 실행 중인 셸의 명령 해석이 바뀌지는 않습니다.
+**`plugin add`만으로 열차가 표시되지는 않습니다.** 설치 후 새 Codex 세션에서 **“Codex Rail setup 스킬로 터미널 연동을 설치하고 상태까지 확인해줘”**라고 요청하세요. 최초 설정이 현재 셸에 맞는 실행 연동을 설치합니다. 그 다음 **새 터미널 탭**에서 `codex`를 실행합니다. `/plugins`에서 활성화하는 것만으로 이미 실행 중인 셸의 명령 해석이 바뀌지는 않습니다.
 
 수동으로 설정하려면 `codex plugin add codex-rail@blossom-local --json`의 출력에서 `installedPath`를 확인한 뒤 해당 폴더에서 `python3 scripts/setup.py --install`과 `python3 scripts/setup.py --status`를 실행합니다. GitHub 저장소를 직접 복제할 필요는 없습니다. `blossom-local`은 이 저장소의 마켓플레이스 식별자입니다.
+
+### macOS + zsh: 설치됐는데 열차가 안 나올 때
+
+아래 명령을 zsh에서 실행하세요. `tmux is required` 오류가 나오면 `brew install tmux` 후 다시 실행합니다. Node 22 이상과 Python 3.11 이상도 필요합니다.
+
+```sh
+rail_root=$(codex plugin add codex-rail@blossom-local --json | python3 -c 'import json,sys; print(json.load(sys.stdin)["installedPath"])')
+python3 "$rail_root/scripts/setup.py" --install
+python3 "$rail_root/scripts/setup.py" --status
+source "${XDG_CONFIG_HOME:-$HOME/.config}/codex-rail/integration.zsh"
+codex
+```
+
+상태 출력이 `"configured": true`여야 합니다. 터미널 높이가 20줄 미만이면 기본 Codex로 전달하므로 창을 키워 주세요. 기존 `codex` 별칭이나 함수가 있으면 설정이 중단됩니다. 기존 설정을 임의로 지우지 말고 오류 내용을 확인하세요.
+
+### Windows PowerShell: 수동 설정
+
+Windows Terminal, Node 22+, Python 3.11+, native Codex CLI를 준비하고 로그인하세요. **앞으로 사용할 PowerShell 버전에서** 다음을 실행합니다. PowerShell 5.1과 7은 서로 다른 프로필을 사용하므로 각 환경에서 별도로 설정합니다.
+
+```powershell
+$rail = codex plugin add codex-rail@blossom-local --json | ConvertFrom-Json
+& (Join-Path $rail.installedPath 'scripts\setup.ps1') -Install -ProfilePath $PROFILE.CurrentUserCurrentHost
+& (Join-Path $rail.installedPath 'scripts\setup.ps1') -Status -ProfilePath $PROFILE.CurrentUserCurrentHost
+. (Join-Path $env:APPDATA 'codex-rail\integration.ps1')
+codex
+```
+
+`codex`를 실행하면 새 Windows Terminal 창에 Codex와 열차가 위아래로 표시됩니다. 원래 PowerShell은 해당 실행이 끝날 때까지 기다립니다. 열차 영역은 처음에 약 6줄이며 창 크기 변경 시 분할 비율을 따릅니다. 대화는 위쪽 창에서 스크롤합니다. Codex를 종료하면 열차도 종료됩니다. PowerShell 실행 정책이 스크립트를 막으면 해당 정책에 맞게 서명 또는 허용된 배포 경로를 사용해야 하며, 설치 스크립트는 정책을 변경하거나 우회하지 않습니다.
+
+Windows에서 일시 중지하려면 `$env:CODEX_RAIL_DISABLE = '1'`을 설정하고, 다시 켜려면 `Remove-Item Env:\CODEX_RAIL_DISABLE`을 실행합니다. 완전히 제거할 때는 설치된 `setup.ps1`에 `-Remove -ProfilePath $PROFILE.CurrentUserCurrentHost`를 전달한 뒤 플러그인을 제거하고 새 PowerShell 탭을 엽니다.
 
 ### 업데이트
 
@@ -57,9 +93,9 @@ python3 scripts/setup.py --status
 
 ## 실행 및 표시
 
-최소 높이는 20줄, 권장 너비는 80칸이고 열차는 6줄을 사용합니다. 작은 창에서는 간단한 열차로 전환합니다. 일반 Codex처럼 종료하면 열차도 종료됩니다. 래퍼 내부의 tmux에서 `Ctrl+B`, `D`를 누르면 이 래퍼 세션도 닫힙니다. 기존 사용자의 tmux 설정과 세션은 건드리지 않습니다.
+macOS/zsh에서는 최소 높이 20줄, 권장 너비 80칸이며 열차는 6줄을 사용합니다. 작은 창에서는 간단한 열차로 전환합니다. 일반 Codex처럼 종료하면 열차도 종료됩니다. 래퍼 내부의 tmux에서 `Ctrl+B`, `D`를 누르면 이 래퍼 세션도 닫힙니다. 기존 사용자의 tmux 설정과 세션은 건드리지 않습니다. Windows에서는 위의 PowerShell 안내를 따릅니다.
 
-대화 영역에서 마우스 휠이나 트랙패드로 위아래로 스크롤하면 이전 대화 출력을 볼 수 있습니다. 맨 아래까지 내리거나 스크롤 모드에서 `q`를 누르면 입력 화면으로 돌아옵니다. 키보드로는 `Ctrl+B`를 누른 다음 `[`를 눌러 스크롤 모드에 들어갈 수 있습니다. 방향키 위·아래는 기존처럼 입력 기록을 탐색합니다. 0.2.0의 휠이 입력 기록을 넘기던 문제는 0.2.1에서 수정했습니다.
+tmux의 대화 영역에서 마우스 휠이나 트랙패드로 위아래로 스크롤하면 이전 대화 출력을 볼 수 있습니다. 맨 아래까지 내리거나 스크롤 모드에서 `q`를 누르면 입력 화면으로 돌아옵니다. 키보드로는 `Ctrl+B`를 누른 다음 `[`를 눌러 스크롤 모드에 들어갈 수 있습니다. 방향키 위·아래는 기존처럼 입력 기록을 탐색합니다. 0.2.0의 휠이 입력 기록을 넘기던 문제는 0.2.1에서 수정했습니다.
 
 `codex exec`, 로그인, 업데이트, 플러그인 관리, 도움말, 버전 조회, 명시적인 원격 연결, 파이프 실행은 원래 Codex로 전달됩니다. `CODEX_RAIL_DISABLE=1 codex` 또는 `command codex`로 일시적으로 우회할 수 있습니다. `/plugins`에서 비활성화하면 다음 실행부터 원래 Codex를 사용합니다. 셸 연동을 완전히 지우려면 `python3 <설치된 플러그인>/scripts/setup.py --remove`를 실행합니다.
 
@@ -67,13 +103,13 @@ python3 scripts/setup.py --status
 
 데모 키: `1` 작업, `2` 승인 대기, `3` 완료, `4` 오류, `5` 압축, `m` 모델 변경, `f` Fast 전환, `q` 종료. 데모는 가상 데이터이며 모델을 호출하지 않습니다.
 
-## 소규모 테스트 배포 (0.2.1)
+## 소규모 테스트 배포 (0.3.0)
 
-이번 테스트의 우선 대상은 macOS + zsh입니다. Linux와 Windows는 아직 검증하지 않았습니다. 개발 환경의 Codex CLI는 0.164.0이며 다른 버전의 호환성은 별도 확인이 필요합니다. Node 22 이상, Python 3.11 이상, tmux와 로그인된 Codex CLI를 준비하세요. WebSocket 라이브러리가 포함돼 있어 `npm install`은 필요하지 않습니다.
+아래 ZIP 설치 안내는 macOS + zsh용입니다. Windows는 위 PowerShell 설치 안내를 따르세요. 개발 환경의 Codex CLI는 0.164.0이며 다른 버전의 호환성은 별도 확인이 필요합니다. Node 22 이상, Python 3.11 이상, tmux와 로그인된 Codex CLI를 준비하세요. WebSocket 라이브러리가 포함돼 있어 `npm install`은 필요하지 않습니다.
 
 ### 받는 사람: 설치
 
-전달받은 `codex-rail-0.2.1-test.zip`을 압축 해제한 뒤 `codex-rail-0.2.1` 폴더를 계속 보관할 위치로 옮기세요. 아래 명령은 그 폴더에서 실행합니다. 경로에 공백이 있어도 됩니다. 설치 후 폴더를 옮기거나 삭제하면 셸 연동을 다시 설정해야 합니다.
+전달받은 `codex-rail-0.3.0-test.zip`을 압축 해제한 뒤 `codex-rail-0.3.0` 폴더를 계속 보관할 위치로 옮기세요. 아래 명령은 그 폴더에서 실행합니다. 경로에 공백이 있어도 됩니다. 설치 후 폴더를 옮기거나 삭제하면 셸 연동을 다시 설정해야 합니다.
 
 ```sh
 node --version
@@ -127,7 +163,7 @@ python3 -m unittest discover -s test -p 'test_*.py'
 python3 scripts/package.py
 ```
 
-`dist/codex-rail-0.2.1-test.zip`과 같은 이름의 `.zip.sha256` 파일을 테스트 참여자에게 함께 전달합니다. ZIP에는 실행 코드, 설치 스킬, 마켓플레이스 정보, 안내, 기존 테스트와 `ws` 라이선스가 들어갑니다. `node_modules`, Python 캐시, 로그, 개인 설정은 포함하지 않습니다. 체크섬은 두 파일이 있는 폴더에서 `shasum -a 256 -c codex-rail-0.2.1-test.zip.sha256`으로 확인할 수 있습니다.
+`dist/codex-rail-0.3.0-test.zip`과 같은 이름의 `.zip.sha256` 파일을 테스트 참여자에게 함께 전달합니다. ZIP에는 실행 코드, 설치 스킬, 마켓플레이스 정보, 안내, 기존 테스트와 `ws` 라이선스가 들어갑니다. `node_modules`, Python 캐시, 로그, 개인 설정은 포함하지 않습니다. 체크섬은 두 파일이 있는 폴더에서 `shasum -a 256 -c codex-rail-0.3.0-test.zip.sha256`으로 확인할 수 있습니다.
 
 다음 배포에서는 `plugin.json`, `package.json`, `package-lock.json`의 버전을 함께 올리고 위 안내의 버전과 파일 이름도 갱신하세요. 참여자는 이전 연동과 플러그인을 제거한 뒤 새 폴더에서 다시 설치합니다.
 
@@ -141,7 +177,9 @@ python3 scripts/package.py
 
 CLI가 제목 생성용으로 여는 `thread_title` 같은 내부 스레드는 표시 대상으로 선택하지 않습니다. 이 구분이 없던 초기 테스트본에서는 제목 생성 후 모델이 LUNA, 컨텍스트가 약 3%로 고정되는 문제가 있었습니다. 수정본 적용 후에는 Codex Rail 세션을 한 번 종료하고 다시 실행해야 합니다.
 
-프롬프트, 응답, 인증 정보, 도구 출력은 기록하지 않습니다. 표시용 최소 상태만 권한 0700 임시 디렉터리의 0600 파일에 저장하고 종료 시 지웁니다. 서버는 TCP 포트를 열지 않으며 브라우저 Origin이 있는 연결도 거부합니다.
+대화 로그, 응답, 인증 정보, 도구 출력은 기록하지 않습니다. 표시용 최소 상태와 실행 인자 등 세션 시작 정보는 임시 디렉터리에 저장하고 종료 시 지웁니다. macOS/Linux는 디렉터리 0700 및 파일 0600 권한의 Unix socket을 사용하며 TCP 포트를 열지 않습니다.
+
+Windows는 현재 사용자만 접근할 수 있도록 ACL을 제한한 임시 디렉터리를 사용합니다. Codex app-server를 해당 실행의 stdio 자식 프로세스로 시작하고, TUI는 임의 포트의 `127.0.0.1` WebSocket으로 연결합니다. 매 실행 생성하는 토큰이 있는 연결만 허용하며 토큰은 파일이나 명령행에 쓰지 않고 TUI 자식의 환경 변수로 전달합니다. 모든 플랫폼에서 브라우저 Origin이 있는 연결을 거부하고, 승인 요청과 사용자의 결정은 그대로 전달합니다. Windows Terminal의 분할 창은 [Microsoft 공식 명령행 인터페이스](https://learn.microsoft.com/en-us/windows/terminal/command-line-arguments)를 사용합니다.
 
 컨텍스트 비율은 `last.totalTokens / modelContextWindow`이므로 Codex 기본 표시의 예약 용량·반올림 방식과 차이가 날 수 있습니다. 승객 한 명은 최대 10%를 나타내며 수치는 객차 안에 표시합니다. 새 세션이나 재개 직후에는 첫 토큰 이벤트 전까지 컨텍스트가 `--`일 수 있습니다. 모델 변경은 서버에서 확인된 설정을 기준으로 표시합니다. 서버가 보고하는 모델이 바뀌면 CLI 기본 상태줄과 명판이 다를 수 있습니다. ASTRA·SOL 외 모델은 회색의 짧은 명판으로 표시합니다.
 
@@ -155,3 +193,5 @@ python3 -m unittest discover -s test -p 'test_*.py'
 ```
 
 주간 한도 선택, 스레드 분리, 토큰 계산, 상태 전이, 모델 및 Fast 변경, 화면 너비, 요청 전달과 승인 비개입을 검증합니다.
+
+Windows 자동 테스트는 PowerShell 5.1과 7에서 임시 프로필의 설치·백업·제거, 빈 값·따옴표·한글을 포함한 인자 보존, 기본 명령·파이프 전달을 확인합니다. 별도로 loopback 인증, 브라우저 거부, stdio 연결과 종료를 검증합니다. 실제 Windows Terminal GUI에서의 분할 화면·크기 변경·종료·실제 Codex 사용은 수동 확인이 남아 있습니다.

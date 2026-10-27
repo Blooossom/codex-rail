@@ -1,13 +1,16 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { initialState } from './state.mjs';
 import { renderRail } from './render.mjs';
 
 const demo=process.argv.includes('--demo');
 const statePath=process.argv[2];
+const lifetimeIndex=process.argv.indexOf('--lifetime');
+const lifetimePath=lifetimeIndex < 0 ? null : process.argv[lifetimeIndex+1];
 let state=demo?{...initialState(),connected:true,demo:true,model:'gpt-6-astra',context:60,weekly:22,fast:true,status:'working',resetsAt:Date.now()/1000+52*3600,quotaAt:Date.now()}:initialState();
 let tick=0,previous=[],compactTimer;
 const reducedMotion=process.env.CODEX_RAIL_REDUCED_MOTION==='1';
 const draw=()=>{
+  if(lifetimePath&&!existsSync(lifetimePath)){finish();return;}
   if(!demo) {
     try { state=JSON.parse(readFileSync(statePath,'utf8')); } catch { /* Atomic state may not exist during startup. */ }
   }

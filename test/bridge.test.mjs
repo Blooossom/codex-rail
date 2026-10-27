@@ -6,7 +6,7 @@ import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { WebSocket } from '../vendor/ws/wrapper.mjs';
 import { createBridge } from '../src/bridge.mjs';
 
-test('bridge relays original messages, isolates internal usage reads, and never approves requests',async t=>{
+test('bridge relays original messages, isolates internal usage reads, and never approves requests',{skip:process.platform==='win32'},async t=>{
   const dir=mkdtempSync('/tmp/rail-test-');
   const received=[];
   const fake=new EventEmitter();fake.stdout=new PassThrough();fake.stderr=new PassThrough();fake.kill=()=>{};
@@ -44,7 +44,7 @@ async function waitFor(fn){
   assert.fail('Condition not reached');
 }
 
-test('explicit YOLO is applied only to initial resume and acknowledged by the server', async t => {
+test('explicit YOLO is applied only to initial resume and acknowledged by the server', {skip:process.platform==='win32'}, async t => {
   const dir=mkdtempSync('/tmp/rail-test-');
   const received=[];
   let confirm=false;

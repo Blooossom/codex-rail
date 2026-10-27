@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Route interactive shell invocations; never shadow the native executable on PATH."""
 import json
+import base64
 import os
 from pathlib import Path
 import shutil
 import sys
 import tomllib
+import subprocess
 
 VALUE_OPTIONS = {'-c', '--config', '-m', '--model', '-p', '--profile', '-s', '--sandbox',
                  '-a', '--ask-for-approval', '-C', '--cd', '-i', '--image', '--enable',
@@ -59,12 +61,16 @@ def plugin_enabled(plugin_id, home=None, cwd=None):
 def main():
     settings_path = Path(sys.argv[1])
     args = sys.argv[2:]
-    if args[:1] == ['--']:
+    if args[:1] == ['--encoded-args']:
+        args = json.loads(base64.b64decode(args[1], validate=True).decode('utf-8'))
+        if not isinstance(args, list) or not all(isinstance(arg, str) for arg in args):
+            raise SystemExit('Invalid PowerShell arguments.')
+    elif args[:1] == ['--']:
         args = args[1:]
     native = shutil.which('codex')
     settings = {}
     try:
-        settings = json.loads(settings_path.read_text())
+        settings = json.loads(settings_path.read_text(encoding='utf-8'))
         if Path(settings['native']).is_file():
             native = settings['native']
     except (OSError, ValueError, KeyError):
@@ -77,12 +83,17 @@ def main():
                and Path(node).is_file() and os.isatty(0) and os.isatty(1)
                and os.environ.get('CODEX_RAIL_DISABLE') != '1'
                and os.environ.get('CODEX_RAIL_ACTIVE') != '1'
-               and should_wrap(args) and shutil.which('tmux')
+               and should_wrap(args) and shutil.which('wt.exe' if os.name == 'nt' else 'tmux')
                and shutil.get_terminal_size().lines >= 20
                and plugin_enabled(settings['plugin_id']))
     if enabled:
         env = dict(os.environ, CODEX_RAIL_NATIVE_BIN=native)
+        if os.name == 'nt':
+            raise SystemExit(subprocess.call([node, str(root/'src/cli.mjs'), *args], env=env))
         os.execve(node, [node, str(root/'src/cli.mjs'), *args], env)
+    if os.name == 'nt':
+        command = settings.get('native_command', [native])
+        raise SystemExit(subprocess.call([*command, *args]))
     os.execv(native, [native, *args])
 
 if __name__ == '__main__':

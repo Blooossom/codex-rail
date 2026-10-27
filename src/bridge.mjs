@@ -3,7 +3,7 @@ import { EventEmitter } from 'node:events';
 import { PassThrough, Writable } from 'node:stream';
 import readline from 'node:readline';
 import { writeFileSync, renameSync, chmodSync } from 'node:fs';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { WebSocketServer, WebSocket } from '../vendor/ws/wrapper.mjs';
@@ -27,7 +27,8 @@ function daemonConnection(path) {
   return process;
 }
 
-export async function createBridge({ socketPath, statePath, daemonSocket, upstreamFactory, resumePermissions = null }) {
+export async function createBridge({ socketPath, statePath, daemonSocket, upstreamFactory, resumePermissions = null, bearerToken = null }) {
+  if (!socketPath && (!bearerToken || !upstreamFactory)) throw new Error('Loopback transport requires authentication and an upstream.');
   const write = state => {
     writeFileSync(statePath + '.next', JSON.stringify(state), { mode: 0o600 });
     renameSync(statePath + '.next', statePath);
@@ -37,7 +38,13 @@ export async function createBridge({ socketPath, statePath, daemonSocket, upstre
   const server = http.createServer((req, res) => { res.writeHead(404); res.end(); });
   // Filesystem socket is inside a private 0700 directory, and browser Origins are rejected.
   const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 * 1024,
-    verifyClient: info => !info.origin });
+    verifyClient: info => {
+      if (info.origin) return false;
+      if (!bearerToken) return true;
+      const actual = Buffer.from(info.req.headers.authorization || '');
+      const expected = Buffer.from(`Bearer ${bearerToken}`);
+      return actual.length === expected.length && timingSafeEqual(actual, expected);
+    } });
   let active = false, closeConnection = () => {};
   wss.on('connection', socket => {
     if (active) { socket.close(1013, 'A CLI is already connected'); return; }
@@ -115,9 +122,14 @@ export async function createBridge({ socketPath, statePath, daemonSocket, upstre
       if (socket.readyState === WebSocket.OPEN) socket.send(line);
     });
   });
-  await new Promise((resolve, reject) => { server.once('error', reject); server.listen(socketPath, resolve); });
-  chmodSync(socketPath, 0o600);
-  return { rail, async close() {
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    if (socketPath) server.listen(socketPath, resolve);
+    else server.listen(0, '127.0.0.1', resolve);
+  });
+  if (socketPath) chmodSync(socketPath, 0o600);
+  const endpoint = socketPath ? `unix://${socketPath}` : `ws://127.0.0.1:${server.address().port}`;
+  return { rail, endpoint, async close() {
     closeConnection();
     for (const client of wss.clients) client.terminate();
     await new Promise(resolve => wss.close(resolve));

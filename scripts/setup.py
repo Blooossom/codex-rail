@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Idempotent, reversible zsh integration for the installed Codex Rail plugin."""
+"""Idempotent, reversible zsh and PowerShell integration for Codex Rail."""
 import argparse
 import datetime
 import json
@@ -34,10 +34,16 @@ def main():
     mode.add_argument('--status', action='store_true')
     mode.add_argument('--remove', action='store_true')
     parser.add_argument('--plugin-id', default='codex-rail@blossom-local')
+    parser.add_argument('--shell', choices=['zsh', 'powershell'], default='powershell' if os.name == 'nt' else 'zsh')
+    parser.add_argument('--profile', help='Exact current-user PowerShell profile path')
     args = parser.parse_args()
     if sys.version_info < (3,11):
         raise SystemExit('Python 3.11 or newer is required for Codex configuration parsing.')
     root = Path(__file__).resolve().parent.parent
+    if args.shell == 'powershell':
+        from powershell import install
+        install(args, root, find_node, backup, BEGIN, END, BLOCK)
+        return
     directory = Path(os.environ.get('XDG_CONFIG_HOME', Path.home()/'.config'))/'codex-rail'
     rc = Path(os.environ.get('ZDOTDIR', Path.home()))/'.zshrc'
     source = directory/'integration.zsh'
