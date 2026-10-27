@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import select
 import shutil
+import signal
 import struct
 import subprocess
 import sys
@@ -22,6 +23,78 @@ ROOT = Path(__file__).resolve().parent.parent
 
 @unittest.skipUnless(os.name != 'nt' and shutil.which('tmux') and shutil.which('node'), 'POSIX, tmux and Node are required')
 class TerminalTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('codex') and shutil.which('zsh'), 'Codex and zsh are required')
+    def test_official_codex_and_train_start_through_an_existing_function_without_model_calls(self):
+        # Keep daemon socket paths short on macOS and isolate all auth/config state.
+        with tempfile.TemporaryDirectory(prefix='rail-real-', dir='/tmp') as temporary:
+            base = Path(temporary).resolve()
+            (base/'shell').mkdir()
+            (base/'codex').mkdir()
+            (base/'shell/.zshrc').write_text('codex() { command codex --no-alt-screen "$@"; }\n')
+            env = dict(os.environ, CODEX_HOME=str(base/'codex'), XDG_CONFIG_HOME=str(base/'config'),
+                       ZDOTDIR=str(base/'shell'), SHELL=shutil.which('zsh'), TERM='xterm-256color', TMUX='')
+            for key in ['CODEX_RAIL_ACTIVE', 'CODEX_RAIL_DISABLE', 'CODEX_RAIL_AUTO_SETUP_DISABLE']:
+                env.pop(key, None)
+            subprocess.run([sys.executable, str(ROOT/'scripts/setup.py'), '--install'], env=env, cwd=base,
+                           check=True, capture_output=True, timeout=15)
+            sockets = Path('/tmp')/f'tmux-{os.getuid()}'
+            before = set(sockets.glob('codex-rail-*'))
+            master, slave = pty.openpty()
+            fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack('HHHH', 30, 110, 0, 0))
+            child = subprocess.Popen(['zsh', '-i', '-c', 'codex'], cwd=base, env=env,
+                                     stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
+            os.close(slave)
+            stopped = threading.Event()
+            output = bytearray()
+            socket = None
+
+            def drain():
+                while not stopped.is_set():
+                    if select.select([master], [], [], 0.05)[0]:
+                        try:
+                            data = os.read(master, 65536)
+                            if not data:
+                                return
+                            output.extend(data)
+                        except OSError:
+                            return
+
+            reader = threading.Thread(target=drain, daemon=True)
+            reader.start()
+            try:
+                deadline = time.monotonic()+35
+                while time.monotonic() < deadline:
+                    self.assertIsNone(child.poll(), output.decode(errors='replace')[-3000:])
+                    candidates = set(sockets.glob('codex-rail-*'))-before
+                    if candidates:
+                        socket = next(iter(candidates))
+                        panes = subprocess.run(['tmux', '-S', str(socket), 'list-panes', '-F', '#{pane_id}'],
+                                               capture_output=True, text=True, timeout=3).stdout.splitlines()
+                        if len(panes) == 2:
+                            def capture(pane):
+                                return subprocess.check_output(['tmux', '-S', str(socket), 'capture-pane', '-p', '-t', pane],
+                                                               text=True, timeout=3)
+                            top, hud = capture(panes[0]), capture(panes[1])
+                            if 'Welcome to Codex' in top and '┌' in hud and '└' in hud:
+                                self.assertIn('Sign in with ChatGPT', top)
+                                break
+                    time.sleep(0.1)
+                else:
+                    self.fail('Official Codex login UI and train did not appear: '+output.decode(errors='replace')[-3000:])
+            finally:
+                if socket:
+                    subprocess.run(['tmux', '-S', str(socket), 'kill-server'], capture_output=True, timeout=5)
+                try:
+                    child.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    os.killpg(child.pid, signal.SIGTERM)
+                    child.wait(timeout=5)
+                stopped.set()
+                reader.join(timeout=1)
+                os.close(master)
+                subprocess.run(['codex', 'app-server', 'daemon', 'stop'], cwd=base, env=env,
+                               capture_output=True, timeout=15)
+
     def test_wheel_scrolls_transcript_without_changing_prompt(self):
         with tempfile.TemporaryDirectory(prefix='rail-scroll-') as temporary:
             directory = Path(temporary)
