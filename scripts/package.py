@@ -35,7 +35,7 @@ def main():
     name = f'codex-rail-{version}'
     archive = output / f'{name}-test.zip'
     with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED) as bundle:
-        for relative in sorted(files):
+        for relative in sorted(files, key=lambda p: p.as_posix()):
             info = zipfile.ZipInfo(f'{name}/{relative.as_posix()}', date_time=(2026, 1, 1, 0, 0, 0))
             info.create_system = 3
             info.external_attr = 0o100644 << 16
